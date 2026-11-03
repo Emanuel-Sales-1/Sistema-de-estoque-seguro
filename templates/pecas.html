@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Peças e estoque · Bancada de Drones{% endblock %}
+
+{% block conteudo %}
+{% include "_resumo.html" %}
+
+<main class="panel">
+  <div class="list-head">
+    <div class="row between"><h2>Catálogo de peças</h2><a class="btn primary" href="{{ url_for('nova_peca') }}">+ Nova peça</a></div>
+    <form method="GET" action="{{ url_for('pecas') }}" class="busca">
+      <input name="q" type="search" value="{{ q }}" maxlength="80" placeholder="Buscar peça ou modelo de drone…" aria-label="Buscar peças">
+      <select name="tipo" data-autosubmit aria-label="Filtrar por tipo">
+        <option value="">Todos os tipos</option>
+        {% for t in tipos %}<option {{ 'selected' if t == filtro_tipo }}>{{ t }}</option>{% endfor %}
+      </select>
+      <button data-js-hide>Filtrar</button>
+    </form>
+  </div>
+
+  {% if linhas %}
+  <div class="tablebox flush"><table>
+    <thead><tr><th>Peça</th><th>Tipo</th><th>Modelos compatíveis</th><th class="num">Unitário</th><th class="num">Venda</th><th class="num">Margem</th><th>Estoque</th><th>Reservado</th><th>Compra</th><th></th></tr></thead>
+    <tbody>
+    {% for l in linhas %}{% set p = l.peca %}
+      <tr>
+        <td><b style="font-weight:600">{{ p.nome }}</b></td>
+        <td>{{ p.tipo }}</td>
+        <td><div class="chips">{% for m in l.modelos %}<span class="chip">{{ m }}</span>{% else %}<span class="muted">—</span>{% endfor %}</div></td>
+        <td class="num">{{ p.custo_centavos|brl }}</td>
+        <td class="num">{{ p.venda_centavos|brl }}</td>
+        <td class="num">{{ l.margem }}%</td>
+        <td><span class="qty">
+          <form method="POST" action="{{ url_for('ajustar_estoque', id=p.id) }}">{{ csrf_field() }}<input type="hidden" name="delta" value="-1"><input type="hidden" name="q" value="{{ q }}"><input type="hidden" name="tipo" value="{{ filtro_tipo }}"><button aria-label="Menos" {{ 'disabled' if p.estoque <= 0 }}>−</button></form>
+          <span>{{ p.estoque }}</span>
+          <form method="POST" action="{{ url_for('ajustar_estoque', id=p.id) }}">{{ csrf_field() }}<input type="hidden" name="delta" value="1"><input type="hidden" name="q" value="{{ q }}"><input type="hidden" name="tipo" value="{{ filtro_tipo }}"><button aria-label="Mais">+</button></form>
+        </span></td>
+        <td>{% if l.reservado %}<span class="{{ 'short' if l.reservado > p.estoque else 'muted' }}">{{ l.reservado }}{% if l.reservado > p.estoque %} · faltam {{ l.reservado - p.estoque }}{% endif %}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td>{% if p.site %}<a href="{{ p.site }}" target="_blank" rel="noopener noreferrer">{{ p.site|host }}</a>{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td><a class="btn ghost" href="{{ url_for('editar_peca', id=p.id) }}">Editar</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div class="empty">
+    <strong>{{ "Nenhuma peça com esse filtro" if total else "Catálogo vazio" }}</strong>
+    <span>{{ "Ajuste a busca ou o tipo." if total else "Cadastre peças com custo, preço de venda, modelos compatíveis e site de compra." }}</span>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

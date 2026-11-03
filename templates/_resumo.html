@@ -1,0 +1,6 @@
+<section class="stats" aria-label="Resumo">
+  <div class="stat"><span class="label">OS em andamento</span><b>{{ resumo.abertas }}</b></div>
+  <div class="stat"><span class="label">Aguardando peças</span><b class="{{ 'low' if resumo.aguardando }}">{{ resumo.aguardando }}</b></div>
+  <div class="stat"><span class="label">Peças em falta p/ OS</span><b class="{{ 'short' if resumo.faltando }}">{{ resumo.faltando }}</b></div>
+  <div class="stat"><span class="label">Estoque a custo</span><b>{{ resumo.valor|brl }}</b></div>
+</section>

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar · Bancada de Drones{% endblock %}
+
+{% block conteudo %}
+<section class="panel pad cartao-login">
+  <h2>Entrar</h2>
+  <p class="muted">Use o usuário e a senha que o administrador criou para você.</p>
+  <form class="form" action="{{ url_for('login') }}" method="POST">
+    {{ csrf_field() }}
+    <label class="f">Usuário<input name="usuario" autocomplete="username" maxlength="50" autofocus required></label>
+    <label class="f">Senha<input name="senha" type="password" autocomplete="current-password" maxlength="128" required></label>
+    <button class="primary">Entrar</button>
+  </form>
+</section>
+{% endblock %}

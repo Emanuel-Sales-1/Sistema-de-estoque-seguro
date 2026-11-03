@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Logs · Bancada de Drones{% endblock %}
+
+{% block conteudo %}
+<section class="panel pad">
+  <div><h2>Registro de ações</h2><p class="muted">Últimos 200 eventos, do mais recente para o mais antigo. Os registros não podem ser alterados nem apagados.</p></div>
+  <form class="filtros" action="{{ url_for('ver_logs') }}" method="GET">
+    <label class="f">Usuário<input name="usuario" value="{{ filtro_usuario }}" maxlength="50" autocomplete="off"></label>
+    <label class="f">Ação<select name="acao">
+      <option value="">Todas</option>
+      {% for a in acoes %}<option value="{{ a }}" {{ 'selected' if a == filtro_acao }}>{{ a }}</option>{% endfor %}
+    </select></label>
+    <button class="primary">Filtrar</button>
+    <a href="{{ url_for('ver_logs') }}" class="btn ghost">Limpar</a>
+  </form>
+</section>
+
+<section class="panel">
+  {% if logs %}
+  <div class="tablebox flush"><table>
+    <thead><tr><th>Data e hora</th><th>Usuário</th><th>Ação</th><th>Detalhe</th></tr></thead>
+    <tbody>
+    {% for l in logs %}
+      <tr>
+        <td class="mono" style="white-space:nowrap">{{ l.data|dataBR }} {{ l.data[11:] }}</td>
+        <td>{{ l.usuario or '—' }}</td>
+        <td>{{ l.acao }}</td>
+        <td>{{ l.detalhe or '' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div class="empty">Nenhum registro encontrado com esses filtros.</div>
+  {% endif %}
+</section>
+{% endblock %}

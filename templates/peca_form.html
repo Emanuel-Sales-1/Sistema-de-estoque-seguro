@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% set editando = peca and peca.id %}
+{% block titulo %}{{ "Editar peça" if editando else "Nova peça" }} · Bancada de Drones{% endblock %}
+
+{% block conteudo %}
+<section class="panel pad">
+  <h2>{{ "Editar peça" if editando else "Nova peça" }}</h2>
+  {% if os_id and not editando %}<p class="muted">Depois de salvar, a peça é adicionada à {{ os_id|numos }}.</p>{% endif %}
+  <form class="form" method="POST" action="{{ url_for('editar_peca', id=peca.id) if editando else url_for('nova_peca') }}">
+    {{ csrf_field() }}
+    {% if os_id %}<input type="hidden" name="os" value="{{ os_id }}">{% endif %}
+    <label class="f">Nome da peça<input name="nome" value="{{ peca.nome if peca }}" minlength="2" maxlength="100" required autofocus placeholder="Hélice 6030F (par)"></label>
+    <div class="grid2">
+      <label class="f">Tipo de peça<input name="tipo" value="{{ peca.tipo if peca }}" list="tipos" minlength="2" maxlength="50" required placeholder="Hélice"></label>
+      <label class="f">Em estoque (un.)<input name="estoque" type="number" min="0" max="9999999" step="1" value="{{ peca.estoque if peca and peca.estoque is not none else 0 }}"></label>
+      <label class="f">Valor unitário (custo R$)<input name="custo" type="number" min="0" max="1000000" step="0.01" value="{{ peca.custo if peca }}" required></label>
+      <label class="f">Valor de venda (R$)<input name="venda" type="number" min="0" max="1000000" step="0.01" value="{{ peca.venda if peca }}" required></label>
+    </div>
+    <label class="f">Modelos de drone compatíveis <span class="hint">separe por vírgula</span><input name="modelos" value="{{ peca.modelos if peca }}" maxlength="2000" placeholder="DJI Mini 3, DJI Mini 3 Pro"></label>
+    <label class="f">Site para compra<input name="site" type="url" value="{{ peca.site if peca }}" maxlength="500" placeholder="https://loja.exemplo.com/produto"></label>
+    <datalist id="tipos">{% for t in tipos %}<option value="{{ t }}">{% endfor %}</datalist>
+    <div class="row between">
+      <a class="btn" href="{{ url_for('ordens', id=os_id) if os_id else url_for('pecas') }}">Cancelar</a>
+      <button class="primary">Salvar peça</button>
+    </div>
+  </form>
+  {% if editando and usuario.perfil == 'admin' %}
+  <form method="POST" action="{{ url_for('excluir_peca', id=peca.id) }}" style="border-top:1px solid var(--line);padding-top:14px"
+        data-confirm="Excluir esta peça do catálogo?">
+    {{ csrf_field() }}
+    <button class="danger" {{ 'disabled' if usos }}>Excluir peça</button>
+    {% if usos %}<span class="muted" style="font-size:.85rem">Usada em {{ usos }} OS — remova das ordens antes de excluir.</span>{% endif %}
+  </form>
+  {% endif %}
+</section>
+{% endblock %}
