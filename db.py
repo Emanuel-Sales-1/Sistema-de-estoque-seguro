@@ -124,7 +124,6 @@ def registrar(acao, detalhe="", usuario=None):
 
 
 def reservado(con):
-    """Quantidade de cada peça reservada por OS ainda não baixadas nem entregues."""
     linhas = con.execute("""
         SELECT i.peca_id, SUM(i.qtd) AS qtd
         FROM ordem_itens i JOIN ordens o ON o.id = i.ordem_id

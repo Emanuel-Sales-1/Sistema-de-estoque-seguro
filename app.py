@@ -36,8 +36,6 @@ db.criar_tabelas()
 HASH_FALSO = generate_password_hash("qualquer-coisa-aqui")
 
 
-# ---------------------------------------------------------------- utilidades
-
 def quem():
     usuario = g.get("usuario")
     return usuario["usuario"] if usuario else None
@@ -92,8 +90,6 @@ def whatsapp(telefone):
         return ""
     return "https://wa.me/" + ("55" + digitos if len(digitos) <= 11 else digitos)
 
-
-# ---------------------------------------------------------------- sessão e segurança
 
 def token_csrf():
     if "csrf" not in session:
@@ -172,8 +168,6 @@ def admin_required(f):
     return wrapper
 
 
-# ---------------------------------------------------------------- erros
-
 @app.errorhandler(403)
 def acesso_negado(erro):
     db.registrar("acesso_negado", f"{request.method} {request.path}", quem())
@@ -209,8 +203,6 @@ def grande_demais(erro):
 def erro_interno(erro):
     return pagina_erro("Algo deu errado", "Não foi possível concluir a operação. Tente novamente.", 500)
 
-
-# ---------------------------------------------------------------- login
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -251,8 +243,6 @@ def logout():
     return redirect(url_for("login"))
 
 
-# ---------------------------------------------------------------- resumo
-
 def resumo(con):
     abertas = con.execute("SELECT COUNT(*) FROM ordens WHERE status != 'entregue'").fetchone()[0]
     aguardando = con.execute("SELECT COUNT(*) FROM ordens WHERE status = 'aguardando'").fetchone()[0]
@@ -268,8 +258,6 @@ def resumo(con):
 def index():
     return redirect(url_for("ordens"))
 
-
-# ---------------------------------------------------------------- ordens de serviço
 
 def carregar_ordem(con, id):
     ordem = con.execute("SELECT * FROM ordens WHERE id=?", (id,)).fetchone()
@@ -547,8 +535,6 @@ def estornar(id):
     return ir_para(id)
 
 
-# ---------------------------------------------------------------- peças e estoque
-
 @app.route("/pecas")
 @login_required
 def pecas():
@@ -708,8 +694,6 @@ def excluir_peca(id):
     return redirect(url_for("pecas"))
 
 
-# ---------------------------------------------------------------- usuários
-
 @app.route("/usuarios")
 @admin_required
 def listar_usuarios():
@@ -787,8 +771,6 @@ def alternar_ativo(id):
         flash("Conta reativada." if novo else "Conta desativada.", "ok")
     return redirect(url_for("listar_usuarios"))
 
-
-# ---------------------------------------------------------------- logs
 
 @app.route("/logs")
 @admin_required

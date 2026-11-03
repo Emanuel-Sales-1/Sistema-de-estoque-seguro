@@ -1,4 +1,3 @@
-"""Cria o primeiro administrador. Rode uma vez: python criar_admin.py"""
 import getpass
 import sqlite3
 import sys

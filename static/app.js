@@ -1,4 +1,3 @@
-// Pequenos atalhos de interface. O sistema funciona sem JavaScript; isto só evita cliques extras.
 document.addEventListener("change", (e) => {
   if (e.target.matches("select[data-autosubmit]")) e.target.form.requestSubmit();
 });
