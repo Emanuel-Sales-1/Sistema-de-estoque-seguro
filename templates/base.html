@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Bancada de Drones{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="{{ url_for('index') }}">
+      <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
+        <g fill="none" stroke="var(--accent)" stroke-width="2.2">
+          <circle cx="9" cy="9" r="6"/><circle cx="31" cy="9" r="6"/><circle cx="9" cy="31" r="6"/><circle cx="31" cy="31" r="6"/>
+          <path d="M13 13l14 14M27 13L13 27"/>
+        </g>
+        <rect x="15" y="15" width="10" height="10" rx="2" fill="var(--accent)"/>
+      </svg>
+      <span><h1>Bancada de Drones</h1><small>Ordens de serviço e estoque de peças</small></span>
+    </a>
+    {% if usuario %}
+    <nav class="tabs" aria-label="Seções">
+      {% set ep = request.endpoint or '' %}
+      <a href="{{ url_for('ordens') }}" {% if ep == 'ordens' or ep.endswith('_ordem') or ep in ('adicionar_item','alterar_item','remover_item','baixar','estornar') %}aria-current="page"{% endif %}>Ordens de serviço</a>
+      <a href="{{ url_for('pecas') }}" {% if ep == 'pecas' or ep.endswith('_peca') or ep == 'ajustar_estoque' %}aria-current="page"{% endif %}>Peças e estoque</a>
+      {% if usuario.perfil == 'admin' %}
+      <a href="{{ url_for('listar_usuarios') }}" {% if ep == 'listar_usuarios' %}aria-current="page"{% endif %}>Usuários</a>
+      <a href="{{ url_for('ver_logs') }}" {% if ep == 'ver_logs' %}aria-current="page"{% endif %}>Logs</a>
+      {% endif %}
+    </nav>
+    <div class="sessao">
+      <span>{{ usuario.usuario }} ({{ usuario.perfil }})</span>
+      <form action="{{ url_for('logout') }}" method="POST">{{ csrf_field() }}<button>Sair</button></form>
+    </div>
+    {% endif %}
+  </header>
+
+  {% with mensagens = get_flashed_messages(with_categories=true) %}
+    {% for categoria, texto in mensagens %}
+      <div class="msg {{ 'ok' if categoria == 'ok' else 'erro' }}" role="alert">{{ texto }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% block conteudo %}{% endblock %}
+</div>
+</body>
+</html>

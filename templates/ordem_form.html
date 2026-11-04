@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% set editando = ordem and ordem.id %}
+{% block titulo %}{{ "Editar OS" if editando else "Nova OS" }} · Bancada de Drones{% endblock %}
+
+{% block conteudo %}
+<section class="panel pad">
+  <h2>{{ ("Editar " ~ (ordem.id|numos)) if editando else "Nova ordem de serviço" }}</h2>
+  <form class="form" method="POST" action="{{ url_for('editar_ordem', id=ordem.id) if editando else url_for('nova_ordem') }}">
+    {{ csrf_field() }}
+    <div class="grid2">
+      <label class="f">Nome do cliente<input name="cliente" value="{{ ordem.cliente if ordem }}" minlength="2" maxlength="100" required autofocus></label>
+      <label class="f">Telefone<input name="telefone" value="{{ ordem.telefone if ordem }}" inputmode="tel" placeholder="(11) 98765-4321" maxlength="20" required></label>
+      <label class="f">Nº do orçamento<input name="orcamento" value="{{ ordem.orcamento if ordem }}" maxlength="30" required></label>
+      <label class="f">Status<select name="status">
+        {% for v, l in STATUS %}<option value="{{ v }}" {{ 'selected' if ordem and ordem.status == v }}>{{ l }}</option>{% endfor %}
+      </select></label>
+    </div>
+    <label class="f">Drone (marca e modelo)<input name="drone" value="{{ ordem.drone if ordem }}" maxlength="80" placeholder="DJI Mini 3 Pro"></label>
+    <label class="f">Defeito relatado<textarea name="defeito" maxlength="1000">{{ ordem.defeito if ordem }}</textarea></label>
+    <div class="row between">
+      <a class="btn" href="{{ url_for('ordens', id=ordem.id) if editando else url_for('ordens') }}">Cancelar</a>
+      <button class="primary">Salvar</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

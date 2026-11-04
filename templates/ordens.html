@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block titulo %}Ordens de serviço · Bancada de Drones{% endblock %}
+
+{% block conteudo %}
+{% include "_resumo.html" %}
+
+<main class="board">
+  <aside class="panel">
+    <div class="list-head">
+      <div class="row between"><h2>Ordens</h2><a class="btn primary" href="{{ url_for('nova_ordem') }}">+ Nova OS</a></div>
+      <form method="GET" action="{{ url_for('ordens') }}" class="row" style="display:grid;gap:8px">
+        <input name="q" type="search" value="{{ q }}" maxlength="80" placeholder="Buscar cliente, telefone, nº orçamento…" aria-label="Buscar ordens">
+        <select name="status" data-autosubmit aria-label="Filtrar por status">
+          <option value="">Todos os status</option>
+          {% for v, l in STATUS %}<option value="{{ v }}" {{ 'selected' if v == filtro_status }}>{{ l }}</option>{% endfor %}
+        </select>
+        <button data-js-hide>Filtrar</button>
+      </form>
+    </div>
+    <ul class="oslist">
+      {% for o in lista %}
+      <li><a href="{{ url_for('ordens', id=o.id, q=q or None, status=filtro_status or None) }}" aria-current="{{ 'true' if ficha and ficha.ordem.id == o.id else 'false' }}">
+        <span class="c">{{ o.cliente }}</span><span class="pill st-{{ o.status }}">{{ STATUS_LABEL[o.status] }}</span>
+        <span class="d"><span class="mono">{{ o.id|numos }}</span> · Orç. {{ o.orcamento }}{% if o.drone %} · {{ o.drone }}{% endif %}</span>
+      </a></li>
+      {% else %}
+      <li class="empty">{{ "Nenhuma OS com esse filtro." if total else "Nenhuma OS ainda. Use “+ Nova OS” para abrir a primeira." }}</li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  <section class="panel">
+  {% if not ficha %}
+    <div class="empty">
+      <strong>{{ "Selecione uma ordem de serviço" if total else "Abra a primeira ordem de serviço" }}</strong>
+      <span>A ficha mostra cliente, telefone, orçamento e a lista de peças com custo, venda e situação no estoque.</span>
+      {% if not total %}<a class="btn primary" href="{{ url_for('nova_ordem') }}">+ Nova OS</a>{% endif %}
+    </div>
+  {% else %}
+    {% set os = ficha.ordem %}
+    <div class="sheet">
+      <div class="sheet-head">
+        <div style="display:grid;gap:4px">
+          <span class="mono muted">{{ os.id|numos }} · aberta em {{ os.criado_em|dataBR }}</span>
+          <h2>{{ os.cliente }}</h2>
+        </div>
+        <div class="row">
+          <form class="row" method="POST" action="{{ url_for('status_ordem', id=os.id) }}">
+            {{ csrf_field() }}
+            <select name="status" data-autosubmit aria-label="Status da OS">
+              {% for v, l in STATUS %}<option value="{{ v }}" {{ 'selected' if v == os.status }}>{{ l }}</option>{% endfor %}
+            </select>
+            <button data-js-hide>Salvar status</button>
+          </form>
+          <a class="btn" href="{{ url_for('editar_ordem', id=os.id) }}">Editar dados</a>
+        </div>
+      </div>
+
+      <dl class="fields">
+        <div><dt class="label">Telefone</dt><dd class="mono">{{ os.telefone }}
+          {% if ficha.whatsapp %}<a href="{{ ficha.whatsapp }}" target="_blank" rel="noopener noreferrer" style="font-family:var(--body);font-size:.82rem">WhatsApp</a>{% endif %}</dd></div>
+        <div><dt class="label">Nº do orçamento</dt><dd class="mono">{{ os.orcamento }}</dd></div>
+        <div><dt class="label">Drone</dt><dd>{{ os.drone or "—" }}</dd></div>
+        <div><dt class="label">Defeito relatado</dt><dd>{{ os.defeito or "—" }}</dd></div>
+      </dl>
+
+      <div style="display:grid;gap:10px">
+        <h3>Peças necessárias</h3>
+        {% if ficha.itens %}
+        <div class="tablebox"><table>
+          <thead><tr><th>Peça</th><th>Tipo</th><th>Compatível com</th><th>Qtd</th><th class="num">Unitário</th><th class="num">Venda</th><th class="num">Subtotal</th><th>Estoque</th><th>Compra</th><th></th></tr></thead>
+          <tbody>
+          {% for it in ficha.itens %}{% set p = it.peca %}
+            <tr>
+              <td><b style="font-weight:600">{{ p.nome }}</b></td>
+              <td>{{ p.tipo }}</td>
+              <td><div class="chips">{% for m, hit in it.modelos %}<span class="chip {{ 'hit' if hit }}">{{ m }}</span>{% else %}<span class="muted">—</span>{% endfor %}</div></td>
+              <td><span class="qty">
+                <form method="POST" action="{{ url_for('alterar_item', id=os.id, peca_id=p.id) }}">{{ csrf_field() }}<input type="hidden" name="delta" value="-1"><button aria-label="Menos" {{ 'disabled' if os.baixado }}>−</button></form>
+                <span>{{ it.qtd }}</span>
+                <form method="POST" action="{{ url_for('alterar_item', id=os.id, peca_id=p.id) }}">{{ csrf_field() }}<input type="hidden" name="delta" value="1"><button aria-label="Mais" {{ 'disabled' if os.baixado }}>+</button></form>
+              </span></td>
+              <td class="num">{{ p.custo_centavos|brl }}</td>
+              <td class="num">{{ p.venda_centavos|brl }}</td>
+              <td class="num"><b style="font-weight:600">{{ it.subtotal|brl }}</b></td>
+              <td>{% if os.baixado %}<span class="ok">Baixado</span>
+                  {% elif it.falta == 0 %}<span class="ok">{{ p.estoque }} em estoque</span>
+                  {% else %}<span class="short">Faltam {{ it.falta }}</span><span class="sub">{{ p.estoque }} em estoque</span>{% endif %}</td>
+              <td>{% if p.site %}<a href="{{ p.site }}" target="_blank" rel="noopener noreferrer">{{ p.site|host }}</a>{% else %}<span class="muted">—</span>{% endif %}</td>
+              <td><span class="row" style="flex-wrap:nowrap">
+                <a class="btn ghost" href="{{ url_for('editar_peca', id=p.id, os=os.id) }}">Editar</a>
+                <form class="inline" method="POST" action="{{ url_for('remover_item', id=os.id, peca_id=p.id) }}">{{ csrf_field() }}<button class="ghost danger" {{ 'disabled' if os.baixado }}>Remover</button></form>
+              </span></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table></div>
+        {% else %}
+        <div class="empty dashed"><span>Nenhuma peça nesta OS. Adicione do catálogo ou cadastre uma nova.</span></div>
+        {% endif %}
+
+        {% if not os.baixado %}
+        <details class="add" {{ 'open' if busca }}>
+          <summary>+ Adicionar peça à OS</summary>
+          <div class="inner">
+            <form method="GET" action="{{ url_for('ordens') }}" class="row" style="flex-wrap:nowrap">
+              <input type="hidden" name="id" value="{{ os.id }}">
+              {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+              {% if filtro_status %}<input type="hidden" name="status" value="{{ filtro_status }}">{% endif %}
+              <input name="busca" type="search" value="{{ busca }}" maxlength="80" placeholder="Buscar no catálogo…" aria-label="Buscar no catálogo">
+              <button>Buscar</button>
+            </form>
+            <p class="muted" style="font-size:.82rem">{{ ("Peças compatíveis com " ~ os.drone ~ " aparecem primeiro.") if os.drone else "Informe o drone na OS para destacar as peças compatíveis." }}</p>
+            <ul class="pick">
+              {% for c in ficha.catalogo %}{% set p = c.peca %}
+              <li><form method="POST" action="{{ url_for('adicionar_item', id=os.id) }}">{{ csrf_field() }}<input type="hidden" name="peca_id" value="{{ p.id }}">
+                <button>
+                  <span>{{ p.nome }} {% if c.compativel %}<span class="chip hit">compatível</span>{% endif %}</span>
+                  <span class="num">{{ p.venda_centavos|brl }}{% if c.na_os %} <span class="pill st-aberta">{{ c.na_os }} na OS</span>{% endif %}</span>
+                  <span class="sub">{{ p.tipo }} · {{ p.estoque }} em estoque{% if p.modelos %} · {{ p.modelos }}{% endif %}</span>
+                </button>
+              </form></li>
+              {% else %}
+              <li class="empty">{{ "Nenhuma peça encontrada." if busca else "O catálogo está vazio." }}</li>
+              {% endfor %}
+            </ul>
+            <a class="btn" href="{{ url_for('nova_peca', os=os.id) }}">+ Cadastrar peça nova e adicionar</a>
+          </div>
+        </details>
+        {% endif %}
+
+        <div class="totals">
+          <div><span class="label">Custo das peças</span><b>{{ ficha.custo|brl }}</b></div>
+          <div><span class="label">Valor de venda</span><b>{{ ficha.venda|brl }}</b></div>
+          <div><span class="label">Margem</span><b class="{{ 'short' if ficha.lucro < 0 else 'ok' }}">{{ ficha.lucro|brl }}{% if ficha.margem is not none %} <small class="muted" style="font-size:.8rem">{{ ficha.margem }}%</small>{% endif %}</b></div>
+        </div>
+
+        <div class="row between" style="border-top:1px solid var(--line);padding-top:12px">
+          <span class="muted" style="font-size:.85rem">{{ "Peças já baixadas do estoque nesta OS." if os.baixado else "Ao usar as peças, dê baixa para descontar do estoque." }}</span>
+          <span class="row">
+            {% if usuario.perfil == 'admin' %}
+            <form class="inline" method="POST" action="{{ url_for('excluir_ordem', id=os.id) }}" data-confirm="Excluir {{ os.id|numos }} de {{ os.cliente }}? Essa ação não pode ser desfeita.">
+              {{ csrf_field() }}<button class="danger">Excluir OS</button>
+            </form>
+            {% endif %}
+            {% if os.baixado %}
+            <form class="inline" method="POST" action="{{ url_for('estornar', id=os.id) }}">{{ csrf_field() }}<button>Estornar baixa</button></form>
+            {% else %}
+            <form class="inline" method="POST" action="{{ url_for('baixar', id=os.id) }}">{{ csrf_field() }}
+              <button class="primary" {{ '' if ficha.pode_baixar else 'disabled' }} title="{{ '' if ficha.pode_baixar else 'Há peças sem estoque suficiente ou a OS está vazia' }}">Dar baixa no estoque</button>
+            </form>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  </section>
+</main>
+{% endblock %}

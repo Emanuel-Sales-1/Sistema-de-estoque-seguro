@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Acesso negado · Bancada de Drones{% endblock %}
+
+{% block conteudo %}
+<section class="panel pad">
+  <h2>Acesso negado</h2>
+  <p class="muted">Seu perfil não tem permissão para essa ação. Fale com um administrador se precisar dela.</p>
+  <a href="{{ url_for('index') }}">Voltar para as ordens de serviço</a>
+</section>
+{% endblock %}

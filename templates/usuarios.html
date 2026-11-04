@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block titulo %}Usuários · Bancada de Drones{% endblock %}
+
+{% block conteudo %}
+<section class="panel pad">
+  <div><h2>Novo usuário</h2><p class="muted">Crie contas, defina perfis e desative quem não deve mais acessar.</p></div>
+  <form class="filtros" action="{{ url_for('adicionar_usuario') }}" method="POST">
+    {{ csrf_field() }}
+    <label class="f">Usuário<input name="usuario" autocomplete="off" maxlength="50" required></label>
+    <label class="f">Senha (mínimo 8 caracteres)<input name="senha" type="password" minlength="8" maxlength="128" autocomplete="new-password" required></label>
+    <label class="f">Perfil<select name="perfil"><option value="comum">comum</option><option value="admin">admin</option></select></label>
+    <button class="primary">Criar usuário</button>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="list-head"><h2>Contas</h2></div>
+  <div class="tablebox flush"><table>
+    <thead><tr><th>Usuário</th><th>Perfil</th><th>Situação</th><th>Ações</th></tr></thead>
+    <tbody>
+    {% for u in usuarios %}
+      <tr>
+        <td>{{ u.usuario }}{% if u.id == usuario.id %} <span class="muted">(você)</span>{% endif %}</td>
+        <td>
+          {% if u.id == usuario.id %}{{ u.perfil }}{% else %}
+          <form class="row" style="flex-wrap:nowrap" action="{{ url_for('alterar_perfil', id=u.id) }}" method="POST">
+            {{ csrf_field() }}
+            <select name="perfil" aria-label="Perfil de {{ u.usuario }}" style="width:auto">
+              <option value="comum" {{ 'selected' if u.perfil == 'comum' }}>comum</option>
+              <option value="admin" {{ 'selected' if u.perfil == 'admin' }}>admin</option>
+            </select>
+            <button>Salvar</button>
+          </form>
+          {% endif %}
+        </td>
+        <td>{% if u.ativo %}<span class="selo ativo">Ativo</span>{% else %}<span class="selo inativo">Desativado</span>{% endif %}</td>
+        <td>
+          {% if u.id != usuario.id %}
+          <form class="inline" action="{{ url_for('alternar_ativo', id=u.id) }}" method="POST">
+            {{ csrf_field() }}
+            {% if u.ativo %}<button class="danger">Desativar</button>{% else %}<button>Reativar</button>{% endif %}
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}
